@@ -1,0 +1,609 @@
+<openerp>
+    <data>
+
+
+	<record id="mage_view_picking_form" model="ir.ui.view">
+	    <field name="name">Mage Picking Form</field>
+	    <field name="model">stock.picking</field>
+	    <field name="inherit_id" ref="stock.view_picking_form" />
+	        <field name="arch" type="xml">
+		    <field name="min_date" position="after">
+			<field name="anticipated_ship_date" attrs="{'invisible': [('backorder_id', '=', False)]}" />
+		    </field>
+		    <field name="partner_id" position="replace" >
+			<field name="partner_id" context="{'show_address': 1}" options='{"always_reload": True}' />
+		    </field>
+	        </field>
+	</record>
+
+        <record id="stock.vpicktree" model="ir.ui.view">
+            <field name="name">stock.picking.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking list">
+                    <field name="name"/>
+                    <field name="location_dest_id"/>
+                    <field name="partner_id" />
+                    <field name="date"/>
+		    <field name="date_done" string="Date Shipped" />
+                    <field name="min_date" invisible="1"/>
+                    <field name="origin"/>
+                    <field name="group_id" invisible="1"/>
+                    <field name="backorder_id"/>
+                    <field name="state"/>
+                    <field name="priority" invisible="1"/>
+                    <field name="picking_type_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+	<!-- End Built in View -->
+
+
+<!-- New view for Outgoing Orders -->
+	<!-- Tree view for Outgoing Orders -->
+        <record id="mage_vpicktree_outgoing" model="ir.ui.view">
+            <field name="name">Mage Outgoing Tree</field>
+            <field name="model">stock.picking</field>
+            <field name="arch" type="xml">
+		<tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking list">
+		    <field name="name" string="Delivery #" />
+		    <field name="date" string="Date Created" />
+		    <field name="date_done" string="Date Shipped" />
+                    <field name="sale" />
+		    <field name="carrier_id" string="Ship Via" />
+		    <field name="origin" invisible="1"/>
+		    <field name="min_date" invisible="1"/>
+		    <field name="group_id" invisible="1"/>
+		    <field name="picking_type_id" invisible="1"/>
+		    <field name="priority" invisible="1"/>
+                    <field name="partner_id" string="Ship To" />
+                    <field name="shipping_city" string="City" />
+                    <field name="shipping_state" string="State" />
+                    <field name="mage_store" />
+		    <field name="backorder_id" />
+		    <field name="state" />
+		</tree>
+            </field>
+        </record>
+
+        <record id="action_outgoing_tree" model="ir.actions.act_window">
+            <field name="name">Outgoing</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a stock operation. 
+              </p><p>
+                Most operations are prepared automatically by Odoo according
+                to your preconfigured logistics rules, but you can also record
+                manual stock movements.
+              </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_outgoing_tree">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_outgoing"/>
+            <field name="act_window_id" ref="action_outgoing_tree"/>
+        </record>
+
+	<!-- Action for unshipped Outgoing Orders -->
+        <record id="action_outgoing_tree_ready_ship" model="ir.actions.act_window">
+            <field name="name">Ready To Ship</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_available': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_outgoing_tree_ready_ship">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_outgoing"/>
+            <field name="act_window_id" ref="action_outgoing_tree_ready_ship"/>
+        </record>
+
+
+        <record id="action_outgoing_tree_waiting" model="ir.actions.act_window">
+            <field name="name">Waiting Availability Outgoing Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_waiting': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_outgoing_tree_waiting">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_outgoing"/>
+            <field name="act_window_id" ref="action_outgoing_tree_waiting"/>
+        </record>
+
+
+	<!-- Late Outgoing Orders -->
+        <record id="action_outgoing_tree_late" model="ir.actions.act_window">
+            <field name="name">Late Outgoing Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_late': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_outgoing_tree_late">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_outgoing"/>
+            <field name="act_window_id" ref="action_outgoing_tree_late"/>
+        </record>
+
+	<!-- Backorder Outgoing Orders -->
+        <record id="action_outgoing_tree_backorder" model="ir.actions.act_window">
+            <field name="name">Outgoing Backorders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_backorder': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_outgoing_tree_backorder">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_outgoing"/>
+            <field name="act_window_id" ref="action_outgoing_tree_backorder"/>
+        </record>
+
+<!-- End view for Outgoing Orders -->
+
+
+<!-- New view for Incoming Receipts -->
+
+	<!-- Tree view for Incoming -->
+        <record id="mage_vpicktree_incoming" model="ir.ui.view">
+            <field name="name">Mage Incoming Receipt Tree</field>
+            <field name="model">stock.picking</field>
+            <field name="arch" type="xml">
+		<tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking list">
+		    <field name="name" string="Receipt #" />
+		    <field name="date_done" string="Date Received" />
+		    <field name="carrier_id" string="Receive Via" />
+                    <field name="partner_id" />
+                    <field name="min_date" invisible="1"/>
+                    <field name="group_id" invisible="1"/>
+                    <field name="picking_type_id" invisible="1"/>
+                    <field name="priority" invisible="1"/>
+		    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="action_incoming_tree" model="ir.actions.act_window">
+            <field name="name">Incoming</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a stock operation.
+              </p><p>
+                Most operations are prepared automatically by Odoo according
+                to your preconfigured logistics rules, but you can also record
+                manual stock movements.
+              </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_incoming_tree">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_incoming"/>
+            <field name="act_window_id" ref="action_incoming_tree"/>
+        </record>
+
+        <record id="action_incoming_tree_ready" model="ir.actions.act_window">
+            <field name="name">Pending Receipts</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_available': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_incoming_tree_ready">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_incoming"/>
+            <field name="act_window_id" ref="action_incoming_tree_ready"/>
+        </record>
+
+
+        <record id="action_incoming_tree_late" model="ir.actions.act_window">
+            <field name="name">Late Receipts</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_late': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_incoming_tree_late">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_incoming"/>
+            <field name="act_window_id" ref="action_incoming_tree_late"/>
+        </record>
+
+	<!-- Backorder Incoming Orders -->
+        <record id="action_incoming_tree_backorder" model="ir.actions.act_window">
+            <field name="name">Incoming Backorders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_backorder': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_incoming_tree_backorder">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_incoming"/>
+            <field name="act_window_id" ref="action_incoming_tree_backorder"/>
+        </record>
+
+
+<!-- End Internal Views -->
+
+
+<!-- New view for Inventory Transfers -->
+
+        <!-- Tree View Internal Transfer -->
+        <record id="mage_vpicktree_internal" model="ir.ui.view">
+            <field name="name">Mage Internal Tree</field>
+            <field name="model">stock.picking</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking list">
+		    <field name="name" string="Transfer #" />
+		    <field name="date" />
+		    <field name="date_done" string="Date Transferred" />
+                    <field name="partner_id" string="Transfer To" />
+		    <field name="note" />
+		    <field name="location_id" string="From Location" />
+		    <field name="location_dest_id" string="To Location" />
+                    <field name="min_date" invisible="1"/>
+                    <field name="group_id" invisible="1"/>
+                    <field name="picking_type_id" invisible="1"/>
+                    <field name="priority" invisible="1"/>
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="action_internal_tree" model="ir.actions.act_window">
+            <field name="name">Internal</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a stock operation.
+              </p><p>
+                Most operations are prepared automatically by Odoo according
+                to your preconfigured logistics rules, but you can also record
+                manual stock movements.
+              </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_internal_tree">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_internal"/>
+            <field name="act_window_id" ref="action_internal_tree"/>
+        </record>
+
+
+        <record id="action_internal_tree_ready" model="ir.actions.act_window">
+            <field name="name">Ready Transfers</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_available': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+
+        </record>
+
+	<record model="ir.actions.act_window.view" id="action_o_internal_tree_ready">
+	    <field name="view_mode">tree</field>
+	    <field name="view_id" ref="mage_vpicktree_internal"/>
+	    <field name="act_window_id" ref="action_internal_tree_ready"/>
+	</record>
+
+
+
+        <record id="action_internal_tree_waiting" model="ir.actions.act_window">
+            <field name="name">Waiting Availability Transfers</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_waiting': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_internal_tree_waiting">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_internal"/>
+            <field name="act_window_id" ref="action_internal_tree_waiting"/>
+        </record>
+
+
+        <record id="action_internal_tree_late" model="ir.actions.act_window">
+            <field name="name">Late Transfers</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_late': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_internal_tree_late">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_internal"/>
+            <field name="act_window_id" ref="action_internal_tree_late"/>
+        </record>
+
+        <!-- Backorder Internal Orders -->
+        <record id="action_internal_tree_backorder" model="ir.actions.act_window">
+            <field name="name">Internal Backorders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    'search_default_picking_type_id': [active_id],
+                    'default_picking_type_id': active_id,
+                    'contact_display': 'partner_address',
+                    'search_default_backorder': 1,
+                    'search_default_confirmed': 1,
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_o_internal_tree_backorder">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="mage_vpicktree_internal"/>
+            <field name="act_window_id" ref="action_internal_tree_backorder"/>
+        </record>
+
+
+	<!-- Override entire kanban view to add our changes -->
+        <record id="stock.stock_picking_type_kanban" model="ir.ui.view">
+            <field name="name">stock.picking.type.kanban</field>
+            <field name="model">stock.picking.type</field>
+            <field name="arch" type="xml">
+                <kanban class="oe_background_grey" create="0">
+                    <field name="complete_name"/>
+                    <field name="color"/>
+		    <field name="code" invisible="1" />
+                    <field name="count_picking_ready"/>
+                    <field name="count_picking_draft"/>
+                    <field name="count_picking_waiting"/>
+                    <field name="count_picking_late"/>
+                    <field name="count_picking_backorders"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_stock_picking_type" style="height: 300px;">
+                                <div class="oe_dropdown_toggle oe_dropdown_kanban" groups="stock.group_stock_manager">
+                                    <span class="oe_e">í</span>
+                                    <ul class="oe_dropdown_menu">
+                                        <t t-if="widget.view.is_action_enabled('edit')"><li><a type="edit">Edit...</a></li></t>
+                                        <t t-if="widget.view.is_action_enabled('delete')"><li><a type="delete">Delete</a></li></t>
+                                        <t t-if="widget.view.is_action_enabled('edit')"><li><ul class="oe_kanban_colorpicker" data-field="color"/></li></t>
+                                    </ul>
+                                </div>
+                                <div class="oe_kanban_content">
+                                    <h4 class="text-center"><strong><field name="complete_name"/></strong></h4>
+                                    <div class="oe_right">
+                                        <a name="open_barcode_interface" type="object">
+                                            <img src="/stock/static/src/img/scan.png"
+                                                alt="Click to launch the barcode interface"
+                                                class="oe_stock_scan_image" title="Click to launch the barcode interface"/>
+                                        </a>
+                                    </div>
+                                    <div class="oe_items_list oe_kanban_ellipsis">
+					<div t-if="record.code.raw_value == 'outgoing'">
+                                            <a name="%(action_outgoing_tree_ready_ship)d" type="action">
+                                                <field name="count_picking_ready"/> Ready to Ship
+                                            </a>
+					</div>
+                                        <div t-if="record.code.raw_value == 'internal'">
+                                            <a name="%(action_internal_tree_ready)d" type="action">
+                                                <field name="count_picking_ready"/> Ready to Transfer
+                                            </a>
+                                            <a name="%(stock.action_picking_tree_done)d" type="action" class="oe_sparkline_bar_link">
+                                                <field name="last_done_picking" widget="sparkline_bar" options="{'type': 'tristate', 'colorMap': {'0': 'orange', '-1': 'red', '1': 'green'}}">Last 10 Done Operations</field>
+                                            </a>
+                                        </div>
+                                        <div t-if="record.code.raw_value == 'incoming'">
+                                            <a name="%(action_incoming_tree_ready)d" type="action">
+                                                <field name="count_picking_ready"/> Pending Receipt
+                                            </a>
+                                        </div>
+                                        <div t-if="record.count_picking_waiting.raw_value &gt; 0 and record.code.raw_value == 'internal'">
+                                            <a name="%(action_internal_tree_waiting)d" type="action">
+                                                <field name="count_picking_waiting"/> Waiting Availability
+                                            </a>
+                                        </div>
+                                        <div t-if="record.count_picking_waiting.raw_value &gt; 0 and record.code.raw_value == 'outgoing'">
+                                            <a name="%(action_outgoing_tree_waiting)d" type="action">
+                                                <field name="count_picking_waiting"/> Waiting Availability
+                                            </a>
+                                        </div>
+                                        <div t-if="record.code.raw_value == 'incoming'">
+                                            <a name="%(action_incoming_tree)d" type="action">All Receipts</a>
+                                        </div>
+                                        <div t-if="record.code.raw_value == 'internal'">
+                                            <a name="%(action_internal_tree)d" type="action">All Transfers</a>
+                                        </div>
+                                        <div t-if="record.code.raw_value == 'outgoing'">
+                                            <a name="%(action_outgoing_tree)d" type="action">All Outgoing</a>
+                                        </div>
+                                    </div>
+                                    <div class="oe_picking_type_gauge" style="top:160px;">
+                                        <field name="rate_picking_late" widget="gauge" style="width:150px; height: 110px;" options="{'levelcolors': ['#a9d70b', '#f9c802', '#ff0000'], 'action_jump': '%(stock.action_picking_tree_late)d'}">Late (%%)</field>
+                                        <field name="rate_picking_backorders" widget="gauge" style="width:150px; height: 110px;">Backorders (%%)</field>
+                                        <div class="oe_gauge_labels">
+                                            <div t-if="record.code.raw_value == 'incoming'" class="oe_gauge_label_column">
+                                                <a name="%(action_incoming_tree_late)d" type="action">
+                                                    <field name="count_picking_late"/> Late
+                                                </a>
+                                            </div>
+                                            <div t-if="record.code.raw_value == 'internal'" class="oe_gauge_label_column">
+                                                <a name="%(action_internal_tree_late)d" type="action">
+                                                    <field name="count_picking_late"/> Late
+                                                </a>
+                                            </div>
+                                            <div t-if="record.code.raw_value == 'outgoing'" class="oe_gauge_label_column">
+                                                <a name="%(action_outgoing_tree_late)d" type="action">
+                                                    <field name="count_picking_late"/> Late
+                                                </a>
+                                            </div>
+                                            <div t-if="record.code.raw_value == 'incoming'" class="oe_gauge_label_column">
+                                                <a name="%(action_incoming_tree_backorder)d" type="action">
+                                                    <field name="count_picking_backorders"/> Backorders
+                                                </a>
+                                            </div>
+                                            <div t-if="record.code.raw_value == 'internal'" class="oe_gauge_label_column">
+                                                <a name="%(action_internal_tree_backorder)d" type="action">
+                                                    <field name="count_picking_backorders"/> Backorders
+                                                </a>
+                                            </div>
+                                            <div t-if="record.code.raw_value == 'outgoing'" class="oe_gauge_label_column">
+                                                <a name="%(action_outgoing_tree_backorder)d" type="action">
+                                                    <field name="count_picking_backorders"/> Backorders
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+    </data>
+</openerp>

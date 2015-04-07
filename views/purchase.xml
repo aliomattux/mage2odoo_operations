@@ -1,0 +1,29 @@
+<openerp>
+    <data>
+
+
+	<record id="bol_purchase_order_form" model="ir.ui.view">
+	    <field name="name">BOL Purchase Order Form</field>
+	    <field name="model">purchase.order</field>
+	    <field name="inherit_id" ref="purchase.purchase_order_form" />
+	    <field name="arch" type="xml">
+		<field name="partner_ref" position="after">
+		    <field name="anticipated_receive_date" />
+		</field>
+		<page string="Products" position="after" >
+		    <page string="Sale Orders">
+		        <group string="Sale Orders" >
+			    <field name="sale_orders" nolabel="1" readonly="1" >
+			        <tree>
+			 	    <field name="name" />
+				    <field name="state" invisible="1" />
+			        </tree>
+			    </field>
+		        </group>
+		    </page>
+		</page>
+	    </field>
+	</record>
+
+    </data>
+</openerp>
